@@ -1,0 +1,46 @@
+name: Build bridge app
+
+# Builds on real macOS and Windows runners in GitHub's cloud -- this is how
+# you get a .dmg without owning a Mac. Public repos get these runners free
+# with no monthly limit; private repos get a solid free monthly allowance
+# too.
+#
+# Runs automatically on every push to main, and can also be triggered
+# manually from the Actions tab ("Run workflow" button).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build installer
+        run: npm run dist
+
+      # Uploads whatever electron-builder produced (the .dmg on macOS, the
+      # .exe installer on Windows) so you can download it from the
+      # finished workflow run under "Artifacts".
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: bridge-${{ matrix.os }}
+          path: |
+            dist/*.dmg
+            dist/*.exe
+          if-no-files-found: warn
