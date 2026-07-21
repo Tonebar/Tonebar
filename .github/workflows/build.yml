@@ -16,6 +16,9 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: lr-remote-bridge-app
 
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bridge-windows
-          path: dist/*.exe
+          path: lr-remote-bridge-app/dist/*.exe
           if-no-files-found: warn
 
 # Mac build is disabled for now -- electron-builder needs at least some
