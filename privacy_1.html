@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Privacy Policy — Tonebar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0B0D; --surface: #131316; --border: #26262b;
+    --red: #C4463A; --amber: #E8B34A; --text: #EDEBE6; --muted: #8A8A8F;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --display: 'Space Grotesk', var(--sans);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); line-height: 1.65; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px 100px; }
+  nav.wrap { display: flex; align-items: center; justify-content: space-between; padding: 28px 24px; max-width: 1100px; }
+  .wordmark { font-family: var(--display); font-weight: 700; font-size: 20px; text-decoration: none; color: var(--text); display: flex; align-items: center; gap: 9px; }
+  .wordmark .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px 2px rgba(196,70,58,0.6); }
+  a { color: var(--amber); }
+  h1 { font-family: var(--display); font-size: 34px; margin: 32px 0 8px; }
+  .updated { color: var(--muted); font-size: 13.5px; margin-bottom: 40px; }
+  h2 { font-family: var(--display); font-size: 19px; margin: 40px 0 12px; }
+  p, li { color: #cfcfce; font-size: 15px; }
+  .callout {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 20px; margin: 28px 0; font-size: 14.5px; color: var(--text);
+  }
+  .callout strong { color: var(--amber); }
+  footer.wrap { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 40px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+
+<nav class="wrap">
+  <a href="index.html" class="wordmark"><span class="dot"></span>Tonebar</a>
+</nav>
+
+<main class="wrap">
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: [add date when you publish this]</p>
+
+  <div class="callout">
+    <strong>In short:</strong> Tonebar doesn't have a server, doesn't have accounts, and doesn't send anything about you or your photos anywhere. Everything it does happens directly between your phone and your own computer, over your own Wi-Fi network.
+  </div>
+
+  <h2>What Tonebar is</h2>
+  <p>Tonebar is a phone app, a small desktop helper app ("the bridge"), and a Lightroom Classic plugin, that together let you adjust Lightroom's Develop sliders from your phone. This policy covers all three.</p>
+
+  <h2>What we collect</h2>
+  <p>Nothing. There is no account to create, no analytics library, no crash reporting service, and no server operated by us that any of these apps talk to. We have no way to see how you use the app, what photos you edit, or who you are.</p>
+
+  <h2>What's stored, and where</h2>
+  <p>The phone app stores a small amount of information locally, on your own device only:</p>
+  <ul>
+    <li>The address and pairing code of your bridge app, so you don't have to re-enter them each time</li>
+    <li>Your custom slider layouts (which parameters you've assigned to which pages)</li>
+  </ul>
+  <p>None of this is uploaded anywhere. It stays on your phone, in the app's own private storage, and is deleted if you delete the app.</p>
+
+  <h2>Local network use</h2>
+  <p>The phone app connects directly to the bridge app running on your computer, over your local Wi-Fi network. This connection never leaves your network — it doesn't route through the internet or through any server we operate. Your phone's operating system may show a one-time permission prompt for this ("local network access"); that permission is what allows the phone and computer to find each other on the same Wi-Fi, nothing more.</p>
+
+  <h2>Your photos</h2>
+  <p>Tonebar never sees, stores, uploads, or has access to your photos. It only sends small text instructions like "set Exposure to +0.5" from your phone to the Lightroom plugin — the plugin applies that instruction inside Lightroom itself, on your own computer.</p>
+
+  <h2>Third parties</h2>
+  <p>We don't share data with anyone, because we don't collect any to share. Tonebar doesn't include any third-party analytics, advertising, or tracking SDKs.</p>
+
+  <h2>Children's privacy</h2>
+  <p>Tonebar isn't directed at children and doesn't knowingly collect information from anyone, including children, since it doesn't collect information at all.</p>
+
+  <h2>Changes to this policy</h2>
+  <p>If this policy ever changes — for example, if a future version adds an optional feature that does involve a server — we'll update this page and change the date at the top.</p>
+
+  <h2>Contact</h2>
+  <p>Questions about this policy: [add your contact email or GitHub issues link here]</p>
+</main>
+
+<footer class="wrap">
+  <p>Tonebar is an independent project and is not affiliated with, endorsed by, or sponsored by Adobe. Lightroom is a trademark of Adobe Inc.</p>
+</footer>
+
+</body>
+</html>
