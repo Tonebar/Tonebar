@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tonebar — Remote sliders for Lightroom Classic</title>
+<meta name="description" content="Control Lightroom Classic's Develop sliders from your phone. Full-size faders, custom layouts, no more hunting for tiny handles with a mouse." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0B0B0D;
+    --surface: #131316;
+    --surface-2: #1a1a1e;
+    --border: #26262b;
+    --red: #C4463A;
+    --red-dim: #7A2419;
+    --amber: #E8B34A;
+    --text: #EDEBE6;
+    --muted: #8A8A8F;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --display: 'Space Grotesk', var(--sans);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- nav ---------- */
+  nav.wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 28px;
+    padding-bottom: 28px;
+  }
+  .wordmark {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+  .wordmark .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px 2px rgba(196,70,58,0.6); }
+  .nav-links { display: flex; gap: 28px; align-items: center; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--red);
+    color: #0B0B0D !important;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  /* ---------- hero ---------- */
+  .hero {
+    padding: 56px 0 96px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 16px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-size: 48px;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin: 0 0 20px;
+    font-weight: 700;
+  }
+  .sub {
+    color: var(--muted);
+    font-size: 17px;
+    max-width: 46ch;
+    margin: 0 0 32px;
+  }
+  .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 13px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14.5px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+  }
+  .btn-primary { background: var(--red); color: #0B0B0D; border-color: var(--red); }
+  .btn-ghost { background: var(--surface); color: var(--text); }
+  .btn-ghost:hover { background: var(--surface-2); }
+
+  /* ---------- hero demo fader ---------- */
+  .demo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 20px;
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    user-select: none;
+  }
+  .demo-fader { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 90px; }
+  .demo-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .demo-value { font-family: var(--mono); font-size: 13px; color: var(--text); }
+  .demo-track {
+    position: relative;
+    width: 56px;
+    height: 260px;
+    background: #101013;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    touch-action: none;
+    cursor: grab;
+  }
+  .demo-fill {
+    position: absolute;
+    left: 0; right: 0;
+    background: linear-gradient(180deg, var(--red), var(--red-dim));
+  }
+  .demo-center { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: #3A3A3E; }
+  .demo-hint { font-size: 12px; color: var(--muted); text-align: center; margin-top: 4px; }
+
+  /* ---------- sections ---------- */
+  section { padding: 72px 0; border-top: 1px solid var(--border); }
+  .section-title {
+    font-family: var(--display);
+    font-size: 28px;
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+  .section-sub { color: var(--muted); margin: 0 0 44px; max-width: 55ch; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .step { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .step-num { font-family: var(--mono); color: var(--red); font-size: 13px; margin-bottom: 14px; }
+  .step h3 { font-family: var(--display); font-size: 17px; margin: 0 0 8px; }
+  .step p { color: var(--muted); font-size: 14.5px; margin: 0; }
+
+  .downloads { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .dl-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .dl-card h3 { font-family: var(--display); font-size: 17px; margin: 0; }
+  .dl-card .platform { font-family: var(--mono); font-size: 11px; color: var(--amber); letter-spacing: 0.06em; text-transform: uppercase; }
+  .dl-card p { color: var(--muted); font-size: 13.5px; margin: 0; flex-grow: 1; }
+  .dl-btn {
+    text-align: center;
+    padding: 11px;
+    border-radius: 9px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .dl-btn:hover { background: #202024; }
+  .dl-note { font-size: 12px; color: var(--muted); margin-top: -4px; }
+
+  footer { padding: 40px 0 60px; }
+  .footer-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .footer-links { display: flex; gap: 22px; }
+  .footer-links a { color: var(--muted); text-decoration: none; font-size: 13.5px; }
+  .footer-links a:hover { color: var(--text); }
+  .disclaimer { color: #55555a; font-size: 12px; margin-top: 24px; max-width: 70ch; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; padding-top: 32px; }
+    h1 { font-size: 36px; }
+    .steps, .downloads { grid-template-columns: 1fr; }
+    .demo-card { justify-content: center; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  :focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<nav class="wrap">
+  <a href="#" class="wordmark"><span class="dot"></span>Tonebar</a>
+  <div class="nav-links">
+    <a href="#how-it-works">How it works</a>
+    <a href="#downloads">Downloads</a>
+    <a href="#" class="nav-cta">Get started</a>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div>
+    <p class="eyebrow">For Lightroom Classic — unofficial, not affiliated with Adobe</p>
+    <h1>Your Develop sliders,<br>full size, in your hand.</h1>
+    <p class="sub">Tonebar turns your phone into a set of oversized faders for Lightroom Classic — drag by feel instead of hunting for tiny handles with a mouse, and swipe between custom layouts you build yourself.</p>
+    <div class="hero-ctas">
+      <a href="#downloads" class="btn btn-primary">Download for your Mac or PC</a>
+      <a href="#how-it-works" class="btn btn-ghost">See how it connects</a>
+    </div>
+  </div>
+
+  <div class="demo-card">
+    <div class="demo-fader">
+      <span class="demo-label">Exposure</span>
+      <span class="demo-value" id="val-a">+0.00 EV</span>
+      <div class="demo-track" id="track-a">
+        <div class="demo-center"></div>
+        <div class="demo-fill" id="fill-a" style="top:50%; height:0%;"></div>
+      </div>
+    </div>
+    <div class="demo-fader">
+      <span class="demo-label">Contrast</span>
+      <span class="demo-value" id="val-b">+0</span>
+      <div class="demo-track" id="track-b">
+        <div class="demo-center"></div>
+        <div class="demo-fill" id="fill-b" style="top:50%; height:0%;"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="how-it-works" class="wrap">
+  <h2 class="section-title">Three pieces, one connection</h2>
+  <p class="section-sub">Each part runs where it needs to — nothing to configure beyond entering a code once.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3>Install the bridge</h3>
+      <p>A small menu-bar app for your Mac or PC. It sits quietly and connects your phone to Lightroom — no terminal, no setup screens.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3>Add the Lightroom plugin</h3>
+      <p>One-time step through Lightroom's own Plug-in Manager. The bridge app can open the folder for you.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3>Pair your phone</h3>
+      <p>Open the app, enter the code shown in your menu bar once, and it's remembered from then on.</p>
+    </div>
+  </div>
+</section>
+
+<section id="downloads" class="wrap">
+  <h2 class="section-title">Downloads</h2>
+  <p class="section-sub">The bridge runs on your computer; the plugin loads into Lightroom Classic; the phone app is the remote itself.</p>
+  <div class="downloads">
+    <div class="dl-card">
+      <span class="platform">macOS</span>
+      <h3>Tonebar Bridge</h3>
+      <p>Menu-bar app that connects your phone to Lightroom. Requires macOS 12 or later.</p>
+      <a href="#" class="dl-btn">Download for Mac</a>
+      <span class="dl-note">Replace with your GitHub Releases link</span>
+    </div>
+    <div class="dl-card">
+      <span class="platform">Windows</span>
+      <h3>Tonebar Bridge</h3>
+      <p>Same bridge app, packaged as a Windows installer. Requires Windows 10 or later.</p>
+      <a href="#" class="dl-btn">Download for Windows</a>
+      <span class="dl-note">Replace with your GitHub Releases link</span>
+    </div>
+    <div class="dl-card">
+      <span class="platform">Lightroom Classic</span>
+      <h3>Plugin</h3>
+      <p>Add this once through File → Plug-in Manager. The bridge app can open this folder for you automatically.</p>
+      <a href="#" class="dl-btn">Download plugin</a>
+      <span class="dl-note">Replace with your GitHub Releases link</span>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <div class="footer-row">
+    <span class="wordmark"><span class="dot"></span>Tonebar</span>
+    <div class="footer-links">
+      <a href="privacy.html">Privacy</a>
+      <a href="#">GitHub</a>
+      <a href="#">Support</a>
+    </div>
+  </div>
+  <p class="disclaimer">Tonebar is an independent project and is not affiliated with, endorsed by, or sponsored by Adobe. Lightroom is a trademark of Adobe Inc.</p>
+</footer>
+
+<script>
+  function setupFader(trackId, fillId, valId, min, max, decimals, unit, defaultVal) {
+    var track = document.getElementById(trackId);
+    var fill = document.getElementById(fillId);
+    var val = document.getElementById(valId);
+    var value = defaultVal;
+    var dragging = false;
+
+    function render() {
+      var magnitude = Math.abs(value) / max;
+      var positive = value >= 0;
+      fill.style.top = positive ? (50 - magnitude * 50) + '%' : '50%';
+      fill.style.height = (magnitude * 50) + '%';
+      var glow = 0.15 + magnitude * 0.55;
+      fill.style.boxShadow = '0 0 ' + (16 * magnitude + 4) + 'px rgba(196,70,58,' + glow + ')';
+      var sign = value > 0 ? '+' : '';
+      val.textContent = sign + value.toFixed(decimals) + (unit ? ' ' + unit : '');
+    }
+
+    function setFromClientY(clientY) {
+      var rect = track.getBoundingClientRect();
+      var relY = clientY - rect.top;
+      var pct = 1 - Math.min(1, Math.max(0, relY / rect.height)); // 0 bottom -> 1 top
+      value = min + pct * (max - min);
+      value = Math.min(max, Math.max(min, value));
+      render();
+    }
+
+    track.addEventListener('pointerdown', function (e) {
+      dragging = true;
+      track.setPointerCapture(e.pointerId);
+      setFromClientY(e.clientY);
+    });
+    track.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      setFromClientY(e.clientY);
+    });
+    track.addEventListener('pointerup', function () { dragging = false; });
+    track.addEventListener('pointercancel', function () { dragging = false; });
+
+    render();
+  }
+
+  setupFader('track-a', 'fill-a', 'val-a', -5, 5, 2, 'EV', 0);
+  setupFader('track-b', 'fill-b', 'val-b', -100, 100, 0, '', 0);
+</script>
+
+</body>
+</html>
