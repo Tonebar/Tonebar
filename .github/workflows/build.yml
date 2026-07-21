@@ -15,10 +15,7 @@ on:
 
 jobs:
   build:
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -33,14 +30,24 @@ jobs:
       - name: Build installer
         run: npm run dist
 
-      # Uploads whatever electron-builder produced (the .dmg on macOS, the
-      # .exe installer on Windows) so you can download it from the
-      # finished workflow run under "Artifacts".
+      # Uploads whatever electron-builder produced (the .exe installer)
+      # so you can download it from the finished workflow run under
+      # "Artifacts".
       - name: Upload build output
         uses: actions/upload-artifact@v4
         with:
-          name: bridge-${{ matrix.os }}
-          path: |
-            dist/*.dmg
-            dist/*.exe
+          name: bridge-windows
+          path: dist/*.exe
           if-no-files-found: warn
+
+# Mac build is disabled for now -- electron-builder needs at least some
+# code-signing setup to build cleanly on macOS in CI, even for an unsigned
+# build. Once you have your Apple Developer ID, this can come back as:
+#
+#   build:
+#     strategy:
+#       matrix:
+#         os: [macos-latest, windows-latest]
+#     runs-on: ${{ matrix.os }}
+#     ...(same steps, with CSC_LINK/CSC_KEY_PASSWORD/APPLE_ID/etc. set as
+#         env vars from repo secrets so the Mac job has something to sign with)
