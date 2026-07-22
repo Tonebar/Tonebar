@@ -7,6 +7,8 @@
 <meta name="description" content="Control Lightroom Classic's Develop sliders from your phone. Full-size faders, custom layouts, no more hunting for tiny handles with a mouse." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <style>
   :root {
     --bg: #0B0B0D;
@@ -62,6 +64,7 @@
     gap: 9px;
   }
   .wordmark .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px 2px rgba(196,70,58,0.6); }
+  .wordmark img { height: 34px; width: auto; border-radius: 7px; display: block; }
   .nav-links { display: flex; gap: 28px; align-items: center; }
   .nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; }
   .nav-links a:hover { color: var(--text); }
@@ -220,7 +223,7 @@
 <body>
 
 <nav class="wrap">
-  <a href="#" class="wordmark"><span class="dot"></span>Tonebar</a>
+  <a href="#" class="wordmark"><img src="logo-mark.png" alt="Tonebar">Tonebar</a>
   <div class="nav-links">
     <a href="#how-it-works">How it works</a>
     <a href="#downloads">Downloads</a>
@@ -311,7 +314,7 @@
 
 <footer class="wrap">
   <div class="footer-row">
-    <span class="wordmark"><span class="dot"></span>Tonebar</span>
+    <span class="wordmark"><img src="logo-mark.png" alt="Tonebar">Tonebar</span>
     <div class="footer-links">
       <a href="privacy.html">Privacy</a>
       <a href="#">GitHub</a>
