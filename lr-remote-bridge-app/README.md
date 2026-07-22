@@ -46,22 +46,24 @@ developer identity and paid enrollment.
 
 ## Building without owning a Mac
 `electron-builder` can only reliably produce a macOS build when run on
-actual macOS. If you're on Windows only, use the included GitHub Actions
-workflow (`.github/workflows/build.yml`) instead of `npm run dist` locally:
+actual macOS, and needs at least some code-signing setup to do it cleanly
+even for an unsigned build. The included GitHub Actions workflow
+(`.github/workflows/build.yml`) currently builds **Windows only** for that
+reason — the Mac job is commented out in the workflow, ready to re-enable
+once you've got your Apple Developer ID:
 
-1. Push this project to a GitHub repo (public repos get free macOS build
+1. Push this project to a GitHub repo (public repos get free Actions
    minutes with no monthly cap; private repos get a solid free allowance too)
 2. Go to the repo's **Actions** tab — it builds automatically on push, or
    click "Run workflow" to trigger it manually
-3. Once it finishes, open the run and download the **Artifacts** —
-   `bridge-macos-latest` and `bridge-windows-latest`, each containing the
-   respective installer
+3. Once it finishes, open the run and download the **Artifact** —
+   `bridge-windows`, containing the installer
 
-That CI-built Mac version will be **unsigned** until you add your Apple
-Developer ID credentials as repo secrets (Settings → Secrets and variables
-→ Actions) and reference them in the workflow's env — worth doing once
-you've enrolled, since electron-builder will sign and notarize
-automatically as part of the same build.
+When you're ready to add Mac back in: uncomment the block at the bottom of
+`build.yml`, add your Apple Developer ID certificate and Apple ID
+credentials as repo secrets (Settings → Secrets and variables → Actions),
+and reference them as env vars in the workflow step — electron-builder
+will then sign and notarize automatically as part of that same build.
 
 ## Known limitation carried over from the plain script
 Same as before: whichever computer runs this needs its firewall to allow
