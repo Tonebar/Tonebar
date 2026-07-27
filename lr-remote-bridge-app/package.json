@@ -26,7 +26,9 @@
       "icon": "assets/app-icon-1024.png",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
-      "notarize": true
+      "notarize": {
+        "teamId": "LQ24358H28"
+      }
     },
     "win": {
       "target": ["nsis"],
