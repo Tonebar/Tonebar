@@ -7,6 +7,21 @@ const os = require('os');
 const { startBridge, stopBridge, getStatus, getToken, getAddresses } = require('./bridge');
 
 let tray = null;
+let refreshIntervalId = null;
+
+// A plain app.quit() asks Electron to go through its normal graceful
+// shutdown -- but for a menu-bar-only ("accessory") app on macOS, that
+// sequence can silently stall (commonly the Tray object or a still-running
+// setInterval holding things open), leaving the process and menu bar icon
+// behind even though before-quit already ran and stopped the bridge. Doing
+// the cleanup ourselves and forcing an immediate process exit sidesteps
+// that instead of hoping the graceful path completes.
+function quitForReal() {
+  stopBridge();
+  if (refreshIntervalId) clearInterval(refreshIntervalId);
+  if (tray) tray.destroy();
+  app.exit(0);
+}
 
 // Copies the bundled plugin folder out to the user's Documents the first
 // time it's needed, then reveals it in Finder/Explorer. Lightroom Classic
@@ -81,7 +96,7 @@ function buildMenu() {
       click: (menuItem) => app.setLoginItemSettings({ openAtLogin: menuItem.checked }),
     },
     { type: 'separator' },
-    { label: 'Quit', click: () => app.quit() },
+    { label: 'Quit', click: quitForReal },
   ]);
 }
 
@@ -105,7 +120,7 @@ app.whenReady().then(() => {
   // Addresses/token don't change at runtime, but re-checking the menu
   // occasionally keeps the connection dot honest without needing every
   // single event wired up individually.
-  setInterval(refreshMenu, 5000);
+  refreshIntervalId = setInterval(refreshMenu, 5000);
 });
 
 app.on('window-all-closed', () => {
@@ -114,6 +129,11 @@ app.on('window-all-closed', () => {
   // reachable) even with nothing else open.
 });
 
-app.on('before-quit', () => {
-  stopBridge();
+// Covers quit triggered any other way than the menu item (Cmd+Q, Dock
+// right-click Quit, etc.) so it's forceful there too, not just from our own
+// menu -- otherwise those paths would still hit the original stuck-graceful-
+// shutdown problem.
+app.on('before-quit', (event) => {
+  event.preventDefault();
+  quitForReal();
 });
