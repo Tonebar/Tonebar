@@ -25,7 +25,8 @@
       "target": ["dmg"],
       "icon": "assets/app-icon-1024.png",
       "hardenedRuntime": true,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "notarize": true
     },
     "win": {
       "target": ["nsis"],
