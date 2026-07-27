@@ -1,9 +1,9 @@
 name: Build bridge app
 
 # Builds on real macOS and Windows runners in GitHub's cloud -- this is how
-# you get a .dmg without owning a Mac. Public repos get these runners free
-# with no monthly limit; private repos get a solid free monthly allowance
-# too.
+# you get a signed, notarized .dmg without owning a Mac yourself. Public
+# repos get these runners free with no monthly limit; private repos get a
+# solid free monthly allowance too.
 #
 # Runs automatically on every push to main, and can also be triggered
 # manually from the Actions tab ("Run workflow" button).
@@ -14,7 +14,7 @@ on:
   workflow_dispatch: {}
 
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
     defaults:
       run:
@@ -33,9 +33,6 @@ jobs:
       - name: Build installer
         run: npm run dist
 
-      # Uploads whatever electron-builder produced (the .exe installer)
-      # so you can download it from the finished workflow run under
-      # "Artifacts".
       - name: Upload build output
         uses: actions/upload-artifact@v4
         with:
@@ -43,14 +40,38 @@ jobs:
           path: lr-remote-bridge-app/dist/*.exe
           if-no-files-found: warn
 
-# Mac build is disabled for now -- electron-builder needs at least some
-# code-signing setup to build cleanly on macOS in CI, even for an unsigned
-# build. Once you have your Apple Developer ID, this can come back as:
-#
-#   build:
-#     strategy:
-#       matrix:
-#         os: [macos-latest, windows-latest]
-#     runs-on: ${{ matrix.os }}
-#     ...(same steps, with CSC_LINK/CSC_KEY_PASSWORD/APPLE_ID/etc. set as
-#         env vars from repo secrets so the Mac job has something to sign with)
+  build-mac:
+    runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: lr-remote-bridge-app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      # electron-builder signs with CSC_LINK/CSC_KEY_PASSWORD (your Developer
+      # ID Application cert, base64-encoded, since GitHub secrets are
+      # text-only) and then notarizes automatically using the APPLE_* vars,
+      # because mac.hardenedRuntime is already set to true in package.json.
+      - name: Build, sign, and notarize installer
+        run: npm run dist
+        env:
+          CSC_LINK: ${{ secrets.MAC_CERT_P12_BASE64 }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: bridge-mac
+          path: lr-remote-bridge-app/dist/*.dmg
+          if-no-files-found: warn
