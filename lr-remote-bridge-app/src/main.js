@@ -101,7 +101,12 @@ function buildMenu() {
 }
 
 function refreshMenu() {
-  if (tray) tray.setContextMenu(buildMenu());
+  // stopBridge() (called from quitForReal) closes the Lightroom socket,
+  // whose "close" event fires asynchronously -- often after the tray has
+  // already been destroyed during quit -- and that event handler calls
+  // back into here via `notify`. isDestroyed() guards against touching a
+  // tray that's already gone in that window.
+  if (tray && !tray.isDestroyed()) tray.setContextMenu(buildMenu());
 }
 
 app.whenReady().then(() => {
