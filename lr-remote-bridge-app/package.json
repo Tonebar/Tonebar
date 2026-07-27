@@ -20,6 +20,7 @@
     "appId": "com.example.lrremotebridge",
     "productName": "Remote Slider Control Bridge",
     "files": ["src/**/*", "assets/**/*"],
+    "asarUnpack": ["assets/RemoteSliderControl.lrplugin/**/*"],
     "mac": {
       "category": "public.app-category.photography",
       "target": ["dmg"],
