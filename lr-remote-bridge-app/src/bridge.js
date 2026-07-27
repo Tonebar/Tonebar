@@ -191,8 +191,13 @@ function stopBridge() {
   clients.clear();
 
   if (bonjourInstance) {
+    // unpublishAll's callback fires asynchronously -- capturing it in a
+    // local const (rather than closing over the outer `bonjourInstance`)
+    // means it still has a real instance to call .destroy() on even after
+    // the lines below null out the shared variable.
+    const instance = bonjourInstance;
     try {
-      bonjourInstance.unpublishAll(() => bonjourInstance.destroy());
+      instance.unpublishAll(() => instance.destroy());
     } catch (e) {
       /* ignore */
     }
