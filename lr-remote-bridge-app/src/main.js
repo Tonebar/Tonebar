@@ -15,7 +15,17 @@ let tray = null;
 // gets the user to a folder they can point Plug-in Manager at, which is as
 // far as this can be automated.
 function revealPlugin() {
-  const bundled = path.join(__dirname, '..', 'assets', 'RemoteSliderControl.lrplugin');
+  const bundledInsideAsar = path.join(__dirname, '..', 'assets', 'RemoteSliderControl.lrplugin');
+  // In a packaged app, __dirname points inside the sealed app.asar archive.
+  // Simple reads (readFile, etc.) get transparently redirected by Electron
+  // to the real files, but fs.cpSync's recursive directory walk doesn't
+  // reliably follow that redirection -- it silently copies nothing from a
+  // path that, as far as it's concerned, doesn't really contain files.
+  // asarUnpack (see package.json) puts real copies in the sibling
+  // app.asar.unpacked folder; pointing there directly sidesteps the
+  // problem instead of relying on Electron's auto-redirection. In dev mode
+  // (`npm start`) there's no app.asar at all, so this replace is a no-op.
+  const bundled = bundledInsideAsar.replace('app.asar', 'app.asar.unpacked');
   const dest = path.join(os.homedir(), 'Documents', 'RemoteSliderControl.lrplugin');
 
   try {

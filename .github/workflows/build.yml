@@ -69,16 +69,6 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      # TEMP diagnostic: confirms whether the plugin actually landed as real
-      # unpacked files inside the packaged app, independent of anything on
-      # a test Mac -- remove once the empty-folder issue is confirmed fixed.
-      - name: Debug - inspect packaged plugin folder
-        run: |
-          echo "--- Full Resources tree ---"
-          find "dist/mac-arm64/Remote Slider Control Bridge.app/Contents/Resources" -maxdepth 6
-          echo "--- Unpacked plugin folder specifically ---"
-          find "dist/mac-arm64/Remote Slider Control Bridge.app/Contents/Resources/app.asar.unpacked/assets/RemoteSliderControl.lrplugin" 2>&1 || echo "NOT FOUND AT THAT PATH"
-
       - name: Upload build output
         uses: actions/upload-artifact@v4
         with:
