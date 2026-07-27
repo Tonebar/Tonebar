@@ -45,25 +45,40 @@ None of the above can be done on your behalf — both require your own
 developer identity and paid enrollment.
 
 ## Building without owning a Mac
-`electron-builder` can only reliably produce a macOS build when run on
-actual macOS, and needs at least some code-signing setup to do it cleanly
-even for an unsigned build. The included GitHub Actions workflow
-(`.github/workflows/build.yml`) currently builds **Windows only** for that
-reason — the Mac job is commented out in the workflow, ready to re-enable
-once you've got your Apple Developer ID:
+The GitHub Actions workflow (`.github/workflows/build.yml`) builds **both**
+Windows and macOS in GitHub's cloud, using a real macOS runner for the Mac
+build — so you don't need to personally own or sit at a Mac to produce the
+`.dmg`. You do need five repo secrets set up first (Settings → Secrets and
+variables → Actions → "New repository secret"), all obtained from Apple's
+side, not from any Mac software:
 
-1. Push this project to a GitHub repo (public repos get free Actions
-   minutes with no monthly cap; private repos get a solid free allowance too)
-2. Go to the repo's **Actions** tab — it builds automatically on push, or
-   click "Run workflow" to trigger it manually
-3. Once it finishes, open the run and download the **Artifact** —
-   `bridge-windows`, containing the installer
+| Secret name | Where it comes from |
+|---|---|
+| `APPLE_ID` | Your Apple ID email address |
+| `APPLE_TEAM_ID` | Apple Developer account → Membership page (a 10-character code) |
+| `APPLE_APP_SPECIFIC_PASSWORD` | Generate at appleid.apple.com → Sign-In and Security → App-Specific Passwords. **Not** your normal Apple ID password. |
+| `MAC_CERT_P12_BASE64` | See below — this is the one step that needs a Mac |
+| `MAC_CERT_PASSWORD` | A password you choose yourself when exporting that certificate |
 
-When you're ready to add Mac back in: uncomment the block at the bottom of
-`build.yml`, add your Apple Developer ID certificate and Apple ID
-credentials as repo secrets (Settings → Secrets and variables → Actions),
-and reference them as env vars in the workflow step — electron-builder
-will then sign and notarize automatically as part of that same build.
+**The one step that needs a Mac** (borrow your partner's for ~10 minutes):
+1. On the Mac, open **Keychain Access** → menu bar → Certificate Assistant →
+   Request a Certificate From a Certificate Authority. Save the `.certSigningRequest`
+   file to disk (email address + "Saved to disk", no CA needed).
+2. In Apple's [developer portal](https://developer.apple.com/account/resources/certificates/list),
+   create a new certificate → **Developer ID Application** → upload that
+   request file → download the resulting `.cer`.
+3. Double-click the downloaded `.cer` to install it into Keychain Access —
+   it'll appear nested under the private key you generated in step 1.
+4. In Keychain Access, right-click that certificate → **Export** → save as
+   a `.p12` file, and set an export password (this becomes `MAC_CERT_PASSWORD`).
+5. In Terminal on the Mac: `base64 -i YourCert.p12 | pbcopy` — this copies
+   the base64-encoded certificate to the clipboard. Paste that directly into
+   the `MAC_CERT_P12_BASE64` GitHub secret.
+
+Once all five secrets are set, push to `main` (or click "Run workflow" on
+the Actions tab) and the `build-mac` job will produce a signed, notarized
+`.dmg` — download it from the finished run under **Artifacts** as
+`bridge-mac`, same as the Windows one.
 
 ## Known limitation carried over from the plain script
 Same as before: whichever computer runs this needs its firewall to allow

@@ -97,12 +97,25 @@ ParamMap.toLightroom = {
 --   LrDevelopController.setAutoTone()
 --   LrDevelopController.showClipping()
 --   LrSelection.flagAsPick() / flagAsReject()
+--   LrUndo.undo() / LrUndo.redo()
+--   catalog:setRawMetadata('rating', n) inside withWriteAccessDo
 -- Note showClipping() isn't documented as a toggle (there's no matching
 -- "hideClipping"), so this is wired as a simple tap-to-show button for now
 -- rather than the true "hold while dragging" behavior from desktop
 -- Lightroom -- that would need multi-touch gesture support we don't have
 -- yet. Worth testing what repeated taps actually do on your version.
-function ParamMap.buildActions(LrDevelopController, LrSelection)
+function ParamMap.buildActions(LrDevelopController, LrSelection, LrUndo, LrApplication)
+	local function setRating(stars)
+		return function()
+			local catalog = LrApplication.activeCatalog()
+			local photo = catalog:getTargetPhoto()
+			if not photo then return end
+			catalog:withWriteAccessDo('Set rating', function()
+				photo:setRawMetadata('rating', stars)
+			end)
+		end
+	end
+
 	return {
 		auto = function()
 			LrDevelopController.setAutoTone()
@@ -116,6 +129,35 @@ function ParamMap.buildActions(LrDevelopController, LrSelection)
 		reject = function()
 			LrSelection.flagAsReject()
 		end,
+		undo = function()
+			LrUndo.undo()
+		end,
+		redo = function()
+			LrUndo.redo()
+		end,
+		-- (There is deliberately no "brush_tool" action here anymore.
+		-- LrDevelopController.selectTool('localized') does switch Lightroom
+		-- to the Brush tool, but LrDevelopController.setValue/getValue --
+		-- the only mechanism this plugin has for driving sliders -- only
+		-- reads/writes the photo's global Develop settings. There's no
+		-- documented SDK hook for targeting an active local adjustment
+		-- mask's values, so remote sliders can't follow a brush selection.
+		-- Confirmed by testing, not just a documentation read.)
+		-- Filmstrip navigation, matching the Left/Right arrow key shortcut.
+		-- LrSelection.nextPhoto()/previousPhoto() are documented in the SDK
+		-- reference but not yet manually re-tested against a live catalog --
+		-- worth a quick sanity check, same as Texture/Dehaze above.
+		next_photo = function()
+			LrSelection.nextPhoto()
+		end,
+		prev_photo = function()
+			LrSelection.previousPhoto()
+		end,
+		rate_1 = setRating(1),
+		rate_2 = setRating(2),
+		rate_3 = setRating(3),
+		rate_4 = setRating(4),
+		rate_5 = setRating(5),
 	}
 end
 

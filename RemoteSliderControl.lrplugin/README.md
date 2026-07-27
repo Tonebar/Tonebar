@@ -49,7 +49,9 @@ calib_green_sat, calib_blue_hue, calib_blue_sat, mixer_<color>_hue,
 mixer_<color>_sat, mixer_<color>_lum` (color = red, orange, yellow, green,
 aqua, blue, purple, magenta)
 
-Valid `ACTION` names: `pick`, `reject`, `auto`, `clipping`
+Valid `ACTION` names: `pick`, `reject`, `auto`, `clipping`, `undo`, `redo`,
+`rate_1`, `rate_2`, `rate_3`, `rate_4`, `rate_5`,
+`copy_settings`, `paste_settings`, `next_photo`, `prev_photo`
 (`before_after` was removed -- there's no documented SDK hook for toggling
 Lightroom's before/after view, confirmed against the full LrDevelopController
 function list, so it can't be implemented this way.)
@@ -58,6 +60,18 @@ function list, so it can't be implemented this way.)
 - `Texture` and `Dehaze` parameter names are best-effort (same naming
   pattern as the confirmed ones, but not individually re-verified against
   every SDK version) — worth a quick manual test.
+- `next_photo`/`prev_photo` use `LrSelection.nextPhoto()`/`previousPhoto()`,
+  which are documented in the SDK reference but haven't been manually
+  re-tested against a live catalog yet — worth confirming they move the
+  filmstrip selection the way the Left/Right arrow keys do.
+- There is no "drive the active brush/local adjustment mask remotely"
+  feature, and there can't be one with this plugin's approach:
+  `LrDevelopController.setValue`/`getValue` (the only mechanism used here
+  for sliders) only reads/writes a photo's global Develop settings, not an
+  active local adjustment mask's values. Confirmed by testing on-device,
+  not just a documentation read. If you paint a mask manually in Lightroom
+  and then use the app's sliders, they'll adjust the whole photo, same as
+  always — there's no supported SDK hook to change that.
 - `RESET` sets a slider to 0, which is not always identical to Lightroom's
   own Reset button (that can fall back to non-zero per-camera defaults).
 - The plugin switches Lightroom into the Develop module automatically when

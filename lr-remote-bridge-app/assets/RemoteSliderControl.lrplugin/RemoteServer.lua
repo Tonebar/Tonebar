@@ -24,10 +24,12 @@ local LrFunctionContext  = import 'LrFunctionContext'
 local LrDevelopController = import 'LrDevelopController'
 local LrApplicationView  = import 'LrApplicationView'
 local LrSelection        = import 'LrSelection'
+local LrUndo             = import 'LrUndo'
+local LrApplication      = import 'LrApplication'
 
 local ParamMap = require 'ParamMap'
 local DevelopClipboard = require 'DevelopClipboard'
-local actions = ParamMap.buildActions(LrDevelopController, LrSelection)
+local actions = ParamMap.buildActions(LrDevelopController, LrSelection, LrUndo, LrApplication)
 
 local RemoteServer = {}
 
@@ -64,6 +66,7 @@ local function applyCommand(line)
 	if not cmd then return end
 
 	if cmd == 'SET' then
+		LrApplicationView.switchToModule('develop')
 		local key, value = rest:match('^(%S+)%s+(%-?%d+%.?%d*)$')
 		if key and value then
 			local numValue = tonumber(value)
@@ -78,6 +81,7 @@ local function applyCommand(line)
 		end
 
 	elseif cmd == 'RESET' then
+		LrApplicationView.switchToModule('develop')
 		local key = rest:match('^(%S+)$')
 		local lrParam = (key == 'temp') and 'Temperature' or ParamMap.toLightroom[key]
 		if lrParam then
@@ -91,6 +95,11 @@ local function applyCommand(line)
 
 	elseif cmd == 'ACTION' then
 		local name = rest:match('^(%S+)$')
+		local DEVELOP_ONLY_ACTIONS = { auto = true, clipping = true }
+		if name and DEVELOP_ONLY_ACTIONS[name] then
+			LrApplicationView.switchToModule('develop')
+		end
+
 		if name == 'copy_settings' then
 			DevelopClipboard.copy()
 		elseif name == 'paste_settings' then
@@ -108,44 +117,83 @@ function RemoteServer.start()
 	LrTasks.startAsyncTask(function()
 		LrFunctionContext.callWithContext('remote_slider_control_server', function(context)
 			RemoteServer.running = true
-			RemoteServer.status = 'starting'
 
-			-- Make sure Develop-only calls (setValue, setAutoTone, etc.)
-			-- have somewhere valid to act.
-			LrApplicationView.switchToModule('develop')
+			-- Some Lightroom subsystems (switching Develop module, binding
+			-- a socket) aren't reliably ready the instant this plugin
+			-- loads at Lightroom's own cold-start -- that was silently
+			-- killing this whole task on first launch, leaving status
+			-- stuck at its default "stopped" until someone noticed and
+			-- clicked Restart Listener by hand. Retrying a few times with
+			-- a short pause makes this self-healing instead.
+			local receiver = nil
+			local attempts = 0
+			while RemoteServer.running and not receiver and attempts < 15 do
+				attempts = attempts + 1
+				RemoteServer.status = attempts == 1 and 'starting' or ('starting (retry ' .. attempts .. ')')
 
-			local receiver
-			receiver = LrSocket.bind {
-				functionContext = context,
-				plugin = _PLUGIN,
-				port = RemoteServer.PORT,
-				mode = 'receive',
+				local ok, result = pcall(function()
+					-- Make sure Develop-only calls (setValue, setAutoTone,
+					-- etc.) have somewhere valid to act.
+					LrApplicationView.switchToModule('develop')
 
-				onConnecting = function(_, port)
-					RemoteServer.status = 'listening on 127.0.0.1:' .. tostring(port)
-				end,
+					-- IMPORTANT: reuse the same socket via :reconnect()
+					-- when the bridge disconnects, rather than creating a
+					-- brand new LrSocket.bind() on the same port. This is
+					-- the pattern shown in Adobe's own example plugins --
+					-- binding a fresh socket to a port that was just
+					-- released can fail to actually start listening
+					-- again, which is what was causing the "still says
+					-- listening, but never actually connects" symptom.
+					return LrSocket.bind {
+						functionContext = context,
+						plugin = _PLUGIN,
+						port = RemoteServer.PORT,
+						mode = 'receive',
 
-				onConnected = function(_, _)
-					RemoteServer.status = 'bridge connected'
-				end,
+						onConnecting = function(_, port)
+							RemoteServer.status = 'listening on 127.0.0.1:' .. tostring(port)
+						end,
 
-				onMessage = function(_, message)
-					local ok, err = pcall(applyCommand, message)
-					if not ok then
-						RemoteServer.status = 'error: ' .. tostring(err)
-					end
-				end,
+						onConnected = function(_, _)
+							RemoteServer.status = 'bridge connected'
+						end,
 
-				onClosed = function(_)
-					RemoteServer.status = 'bridge disconnected, waiting...'
-				end,
+						onMessage = function(_, message)
+							local msgOk, msgErr = pcall(applyCommand, message)
+							if not msgOk then
+								RemoteServer.status = 'error: ' .. tostring(msgErr)
+							end
+						end,
 
-				onError = function(_, err)
-					if err ~= 'timeout' then
-						RemoteServer.status = 'socket error: ' .. tostring(err)
-					end
-				end,
-			}
+						onClosed = function(socket)
+							RemoteServer.status = 'bridge disconnected, reconnecting...'
+							if RemoteServer.running then
+								socket:reconnect()
+							end
+						end,
+
+						onError = function(socket, err)
+							if err == 'timeout' then
+								if RemoteServer.running then socket:reconnect() end
+							else
+								RemoteServer.status = 'socket error: ' .. tostring(err)
+							end
+						end,
+					}
+				end)
+
+				if ok then
+					receiver = result
+				else
+					LrTasks.sleep(1)
+				end
+			end
+
+			if not receiver then
+				RemoteServer.status = 'failed to start after retries -- try Restart Listener'
+				RemoteServer.running = false
+				return
+			end
 
 			while RemoteServer.running do
 				LrTasks.sleep(0.2)

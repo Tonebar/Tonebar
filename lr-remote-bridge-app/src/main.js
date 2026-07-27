@@ -49,7 +49,7 @@ function buildMenu() {
   return Menu.buildFromTemplate([
     { label: connectionLabel, enabled: false },
     { type: 'separator' },
-    { label: 'Bridge address:', enabled: false },
+    { label: 'Bridge address (also discoverable automatically):', enabled: false },
     ...addressItems,
     { type: 'separator' },
     { label: `Pairing token: ${token}`, click: () => clipboard.writeText(token) },

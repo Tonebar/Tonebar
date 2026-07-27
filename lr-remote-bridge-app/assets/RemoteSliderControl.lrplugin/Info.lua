@@ -11,6 +11,15 @@ return {
 	-- have to click anything.
 	LrInitPlugin = 'Init.lua',
 
+	-- IMPORTANT: LrInitPlugin scripts are documented to not reliably fire
+	-- on their own at Lightroom's cold launch -- this is what actually
+	-- forces it to run every time, rather than only after certain trigger
+	-- conditions (like being reloaded during an export). This is almost
+	-- certainly why the listener needed manual restarting after every
+	-- fresh Lightroom launch: the auto-start script likely wasn't being
+	-- invoked at all, not failing partway through.
+	LrForceInitPlugin = true,
+
 	LrExportMenuItems = {
 		{
 			title = 'Remote Slider Control: Show Status',

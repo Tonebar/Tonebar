@@ -9,7 +9,8 @@
     "dist": "electron-builder"
   },
   "dependencies": {
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "bonjour-service": "^1.2.1"
   },
   "devDependencies": {
     "electron": "^31.0.0",

@@ -17,7 +17,18 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const WebSocket = require('ws');
+const { Bonjour } = require('bonjour-service');
 const { app } = require('electron');
+
+// Advertises this bridge on the local network via mDNS/Bonjour, so the
+// phone app can find it automatically instead of needing the address
+// typed in -- and keeps working if the computer's IP changes later,
+// since the phone re-resolves by service name rather than a fixed IP.
+// bonjour-service implements the mDNS protocol itself (doesn't depend on
+// Apple's Bonjour being installed), so this works the same on Windows.
+const SERVICE_TYPE = 'tonebar';
+let bonjourInstance = null;
+let publishedService = null;
 
 const WS_PORT = 8765;
 const LR_HOST = '127.0.0.1';
@@ -151,6 +162,20 @@ function startBridge(onStatusChange) {
 
   connectToLightroom();
   notify();
+
+  try {
+    bonjourInstance = new Bonjour();
+    publishedService = bonjourInstance.publish({
+      name: 'Tonebar Bridge',
+      type: SERVICE_TYPE,
+      port: WS_PORT,
+      txt: { tokenHint: 'pair via app', proto: '1' },
+    });
+  } catch (e) {
+    // mDNS is a nice-to-have for discovery -- if it fails for any reason
+    // (unusual network config, etc.), the bridge should keep working via
+    // manual address entry rather than crash the whole thing.
+  }
 }
 
 function stopBridge() {
@@ -164,6 +189,16 @@ function stopBridge() {
     lrSocket = null;
   }
   clients.clear();
+
+  if (bonjourInstance) {
+    try {
+      bonjourInstance.unpublishAll(() => bonjourInstance.destroy());
+    } catch (e) {
+      /* ignore */
+    }
+    bonjourInstance = null;
+    publishedService = null;
+  }
 }
 
 function getStatus() {
