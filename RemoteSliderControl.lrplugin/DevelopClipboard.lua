@@ -15,30 +15,48 @@
 
 local LrApplication = import 'LrApplication'
 local LrTasks = import 'LrTasks'
+local LrDialogs = import 'LrDialogs'
 
 local DevelopClipboard = {}
 local storedSettings = nil
 
+-- Previously both functions failed completely silently on every path,
+-- success included -- there was no way to tell from the phone (or even
+-- standing at the computer) whether a tap had done anything at all. Every
+-- path now shows a bezel (Lightroom's own on-canvas notification) so it's
+-- unambiguous.
 function DevelopClipboard.copy()
 	local catalog = LrApplication.activeCatalog()
 	local photo = catalog:getTargetPhoto()
-	if photo then
-		storedSettings = photo:getDevelopSettings()
+	if not photo then
+		LrDialogs.showBezel('Copy Settings: no photo selected', 2)
+		return
 	end
+	storedSettings = photo:getDevelopSettings()
+	LrDialogs.showBezel('Copied develop settings', 1.5)
 end
 
 function DevelopClipboard.paste()
-	if not storedSettings then return end
+	if not storedSettings then
+		LrDialogs.showBezel('Nothing copied yet -- use Copy Settings first', 2)
+		return
+	end
 
 	LrTasks.startAsyncTask(function()
 		local catalog = LrApplication.activeCatalog()
 		local photos = catalog:getTargetPhotos()
+
+		if not photos or #photos == 0 then
+			LrDialogs.showBezel('Paste Settings: no photo selected', 2)
+			return
+		end
 
 		catalog:withWriteAccessDo('Paste Develop Settings (Remote Slider Control)', function()
 			for _, photo in ipairs(photos) do
 				photo:applyDevelopSettings(storedSettings)
 			end
 		end)
+		LrDialogs.showBezel('Pasted settings to ' .. #photos .. ' photo(s)', 1.5)
 	end)
 end
 
