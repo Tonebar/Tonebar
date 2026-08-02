@@ -26,14 +26,21 @@ local storedSettings = nil
 -- path now shows a bezel (Lightroom's own on-canvas notification) so it's
 -- unambiguous.
 function DevelopClipboard.copy()
-	local catalog = LrApplication.activeCatalog()
-	local photo = catalog:getTargetPhoto()
-	if not photo then
-		LrDialogs.showBezel('Copy Settings: no photo selected', 2)
-		return
-	end
-	storedSettings = photo:getDevelopSettings()
-	LrDialogs.showBezel('Copied develop settings', 1.5)
+	-- photo:getDevelopSettings() can internally yield, which throws "we can
+	-- only wait from within a task" if called directly from the plugin's
+	-- raw message-handler callback -- it needs its own explicit task
+	-- context here, same as paste() already has below, even though this is
+	-- nested inside RemoteServer's own outer task further up the call chain.
+	LrTasks.startAsyncTask(function()
+		local catalog = LrApplication.activeCatalog()
+		local photo = catalog:getTargetPhoto()
+		if not photo then
+			LrDialogs.showBezel('Copy Settings: no photo selected', 2)
+			return
+		end
+		storedSettings = photo:getDevelopSettings()
+		LrDialogs.showBezel('Copied develop settings', 1.5)
+	end)
 end
 
 function DevelopClipboard.paste()
