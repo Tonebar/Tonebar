@@ -60,6 +60,12 @@ function list, so it can't be implemented this way.)
 - `Texture` and `Dehaze` parameter names are best-effort (same naming
   pattern as the confirmed ones, but not individually re-verified against
   every SDK version) — worth a quick manual test.
+- The Temp slider's "0" point is captured once (on reset/assign) as
+  whatever the current photo's Temperature already was, then reused for
+  subsequent drags. If you switch to a different photo *without* resetting
+  the Temp slider first, that old baseline carries over and won't match the
+  new photo's actual white balance — double-tap (or the Reset quick action)
+  to re-sync it to the photo you're now on.
 - `next_photo`/`prev_photo` use `LrSelection.nextPhoto()`/`previousPhoto()`,
   which are documented in the SDK reference but haven't been manually
   re-tested against a live catalog yet — worth confirming they move the

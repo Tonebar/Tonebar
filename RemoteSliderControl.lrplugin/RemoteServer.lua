@@ -45,16 +45,31 @@ end
 
 -- Our phone app's Temp slider is a relative -100..100 "cooler <-> warmer"
 -- control, but Lightroom's real Temperature parameter is an absolute
--- color temperature in Kelvin, and the *valid range* for that varies by
--- photo (RAW/DNG support a huge range; other formats are documented to
--- behave differently and may support a much narrower window). Rather than
--- assume a fixed range, we ask Lightroom for the real one each time via
--- getRange() and scale our slider to fit it.
+-- color temperature in Kelvin with no universal "neutral" point (as-shot
+-- white balance varies wildly per photo/camera).
+--
+-- FIX: this used to define slider=0 as the midpoint of Lightroom's *entire*
+-- valid Kelvin range (getRange), which for most cameras sits deep in "very
+-- warm" territory (~26000K), nowhere near a photo's actual white balance
+-- (~5000-6500K) -- so touching the slider at all immediately jumped the
+-- photo toward that skewed-warm point, and the halfSpan (also derived from
+-- the full range) was tens of thousands of Kelvin, making tiny drags swing
+-- wildly. Now slider=0 means "whatever this photo's Temperature already
+-- was", captured once into tempBaseline (see captureTempBaseline, called on
+-- reset/assign) and reused for subsequent SET calls during the same drag,
+-- with a small fixed span instead of the full range.
+local tempBaseline = nil
+local TEMP_HALF_SPAN_K = 2000 -- how far slider +100/-100 reaches from baseline
+
+local function captureTempBaseline()
+	local minK, maxK = LrDevelopController.getRange('Temperature')
+	tempBaseline = LrDevelopController.getValue('Temperature') or ((minK + maxK) / 2)
+end
+
 local function temperatureFromSlider(sliderValue)
 	local minK, maxK = LrDevelopController.getRange('Temperature')
-	local baseline = (minK + maxK) / 2
-	local halfSpan = (maxK - minK) / 2
-	local kelvin = baseline + (sliderValue / 100) * halfSpan
+	if not tempBaseline then captureTempBaseline() end
+	local kelvin = tempBaseline + (sliderValue / 100) * TEMP_HALF_SPAN_K
 	return clamp(kelvin, minK, maxK)
 end
 
@@ -91,6 +106,9 @@ local function applyCommand(line)
 			-- "reset" should mean -- which is what was causing Temperature
 			-- to behave inconsistently versus other sliders.
 			LrDevelopController.resetToDefault(lrParam)
+			-- Re-sync the relative slider's "0" point to whatever this reset
+			-- just restored (the photo's real as-shot temperature).
+			if key == 'temp' then captureTempBaseline() end
 		end
 
 	elseif cmd == 'ACTION' then
