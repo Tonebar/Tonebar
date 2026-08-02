@@ -1,14 +1,6 @@
 return {
 
-	-- EXPERIMENT: bumped from 6.0 (pre-dates AI masking entirely) on the
-	-- theory that getDevelopSettings()/applyDevelopSettings() might return
-	-- a fuller settings table -- including mask data -- for a plugin
-	-- declaring a more current SDK target. Unconfirmed; revert to 6.0 if
-	-- Plug-in Manager reports this as incompatible/needing a newer
-	-- Lightroom, or if it loads fine but masks still aren't included.
-	-- LrSdkMinimumVersion deliberately left low -- that's the actual hard
-	-- floor Lightroom rejects on, no reason to also raise that.
-	LrSdkVersion = 13.0,
+	LrSdkVersion = 6.0,
 	LrSdkMinimumVersion = 6.0,
 
 	LrToolkitIdentifier = 'com.example.remotesliderscontrol',

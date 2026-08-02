@@ -78,6 +78,22 @@ function list, so it can't be implemented this way.)
   not just a documentation read. If you paint a mask manually in Lightroom
   and then use the app's sliders, they'll adjust the whole photo, same as
   always — there's no supported SDK hook to change that.
+- Copy/Paste Settings (`copy_settings`/`paste_settings`) *does* carry mask
+  geometry across via `getDevelopSettings()`/`applyDevelopSettings()`, but
+  pastes it as a literal, static shape rather than re-running Lightroom's
+  AI subject detection against the new photo -- so an AI-placed mask (e.g.
+  "Select Subject") can land in the wrong spot if the new photo's subject
+  isn't in the same position as the one it was copied from. That AI
+  re-placement on paste/sync appears to be built into Lightroom's native
+  Sync/Copy-Paste commands specifically, not exposed through this SDK
+  method -- tried targeting a newer `LrSdkVersion` (13.0) in case it
+  unlocked different behavior, no change, reverted back to 6.0. Masks
+  copied this way are best treated as a rough starting point to
+  reposition by hand, not a finished result.
+- No native "Copy Settings" checkbox dialog (choosing which specific
+  settings to include) — that's Lightroom's own internal UI with no
+  documented plugin hook to invoke or replicate it. This plugin's
+  Copy/Paste is always all global-settings-or-nothing.
 - `RESET` sets a slider to 0, which is not always identical to Lightroom's
   own Reset button (that can fall back to non-zero per-camera defaults).
 - The plugin switches Lightroom into the Develop module automatically when
