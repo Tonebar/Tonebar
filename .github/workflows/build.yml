@@ -6,7 +6,11 @@ name: Build bridge app
 # solid free monthly allowance too.
 #
 # Runs automatically on every push to main, and can also be triggered
-# manually from the Actions tab ("Run workflow" button).
+# manually from the Actions tab ("Run workflow" button). Every successful
+# build also republishes a rolling "latest" GitHub Release with both
+# installers attached under fixed filenames -- that's what the website's
+# download buttons link to directly, so they never need updating by hand
+# when a new build goes out.
 
 on:
   push:
@@ -33,11 +37,21 @@ jobs:
       - name: Build installer
         run: npm run dist
 
+      # electron-builder names this with the product name + version
+      # (e.g. "Remote Slider Control Bridge Setup 0.1.0.exe"), which changes
+      # every release -- renaming to a fixed name means the site's download
+      # button URL never has to change either.
+      - name: Rename installer to a stable filename
+        shell: bash
+        run: |
+          exe=$(ls dist/*.exe)
+          mv "$exe" "dist/TonebarBridge-Windows-Setup.exe"
+
       - name: Upload build output
         uses: actions/upload-artifact@v4
         with:
           name: bridge-windows
-          path: lr-remote-bridge-app/dist/*.exe
+          path: lr-remote-bridge-app/dist/TonebarBridge-Windows-Setup.exe
           if-no-files-found: warn
 
   build-mac:
@@ -69,9 +83,44 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      - name: Rename installer to a stable filename
+        run: |
+          dmg=$(ls dist/*.dmg)
+          mv "$dmg" "dist/TonebarBridge-Mac.dmg"
+
       - name: Upload build output
         uses: actions/upload-artifact@v4
         with:
           name: bridge-mac
-          path: lr-remote-bridge-app/dist/*.dmg
+          path: lr-remote-bridge-app/dist/TonebarBridge-Mac.dmg
           if-no-files-found: warn
+
+  publish-release:
+    needs: [build-windows, build-mac]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download Windows build
+        uses: actions/download-artifact@v4
+        with:
+          name: bridge-windows
+          path: release-files
+
+      - name: Download Mac build
+        uses: actions/download-artifact@v4
+        with:
+          name: bridge-mac
+          path: release-files
+
+      # Re-tagging "latest" each run updates the same release in place
+      # instead of piling up a new one per push -- exactly one stable set of
+      # download URLs the website always points to.
+      - name: Publish/update "latest" release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest build
+          body: Automatically rebuilt from the latest commit on main. Not a versioned release -- just the current downloads.
+          prerelease: true
+          files: release-files/*
